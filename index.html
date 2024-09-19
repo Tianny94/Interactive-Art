@@ -3,11 +3,12 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Interactive Heart</title>
+    <title>Interactive Heart Animation</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/p5.js/1.4.0/p5.js"></script>
     <style>
         body {
             margin: 0;
+            padding: 0;
             display: flex;
             justify-content: center;
             align-items: center;
@@ -18,62 +19,71 @@
 </head>
 <body>
     <script>
-    let heartLines = [];
-    let heartPoints = [];
+        let heartLines = [];
+        let heartPoints = [];
+        let heartbeat = 0;
+        let heartbeatSpeed = 0.05;
+        let heartbeatAmplitude = 0.1;
 
-    function setup() {
-      createCanvas(windowWidth, windowHeight);
-      background(240);
-      noFill();
-      stroke(255, 0, 0, 50); // Red, semi-transparent
-      strokeWeight(0.5);
-      
-      // Generate heart points
-      for (let t = 0; t < TWO_PI; t += 0.01) {
-        let x = width / 2 + 16 * pow(sin(t), 3) * 10;
-        let y = height / 2 - (13 * cos(t) - 5 * cos(2*t) - 2 * cos(3*t) - cos(4*t)) * 10;
-        heartPoints.push(createVector(x, y));
-      }
-      
-      // Generate lines
-      for (let i = 0; i < 1000; i++) {
-        let start = random(heartPoints);
-        let end = createVector(
-          width / 2 + random(-width/4, width/4),
-          height / 2 + random(-height/4, height/4)
-        );
-        heartLines.push({start, end, originalEnd: end.copy()});
-      }
-    }
-
-    function draw() {
-      background(240);
-      
-      for (let heartLine of heartLines) {
-        // Calculate distance from mouse to line end
-        let d = dist(mouseX, mouseY, heartLine.end.x, heartLine.end.y);
-        let maxDist = 50; // Maximum distance for effect
-        
-        if (d < maxDist) {
-          // Create a "tickle" effect
-          let angle = atan2(mouseY - heartLine.end.y, mouseX - heartLine.end.x);
-          let tickleStrength = map(d, 0, maxDist, 5, 0);
-          heartLine.end.x = heartLine.originalEnd.x + cos(angle) * tickleStrength;
-          heartLine.end.y = heartLine.originalEnd.y + sin(angle) * tickleStrength;
-        } else {
-          // Gradually return to original position
-          heartLine.end.x = lerp(heartLine.end.x, heartLine.originalEnd.x, 0.1);
-          heartLine.end.y = lerp(heartLine.end.y, heartLine.originalEnd.y, 0.1);
+        function setup() {
+            createCanvas(1000, 1000);
+            background(240);
+            noFill();
+            stroke(255, 0, 0, 50); // Red, semi-transparent
+            strokeWeight(0.6);
+            
+            // Generate heart points
+            for (let t = 0; t < TWO_PI; t += 0.01) {
+                let x = width / 2 + 16 * pow(sin(t), 3) * 10;
+                let y = height / 2 - (13 * cos(t) - 5 * cos(2*t) - 2 * cos(3*t) - cos(4*t)) * 10;
+                heartPoints.push(createVector(x, y));
+            }
+            
+            // Generate lines
+            for (let i = 0; i < 2000; i++) {
+                let start = random(heartPoints);
+                let end = random(heartPoints);
+                heartLines.push({start, end, originalEnd: end.copy()});
+            }
         }
-        
-        // Draw the line
-        line(heartLine.start.x, heartLine.start.y, heartLine.end.x, heartLine.end.y);
-      }
-    }
 
-    function windowResized() {
-      resizeCanvas(windowWidth, windowHeight);
-    }
+        function draw() {
+            background(240);
+            
+            // Update heartbeat
+            heartbeat = sin(frameCount * heartbeatSpeed*0.3) * heartbeatAmplitude*0.3;
+            
+            for (let heartLine of heartLines) {
+                // Calculate distance from mouse to line end
+                let d = dist(mouseX, mouseY, heartLine.end.x, heartLine.end.y);
+                let maxDist = 50; // Maximum distance for effect
+                
+                if (d < maxDist) {
+                    // Create a "tickle" effect
+                    let angle = atan2(mouseY - heartLine.end.y, mouseX - heartLine.end.x);
+                    let tickleStrength = map(d, 0, maxDist, 50, 0);
+                    heartLine.end.x = heartLine.originalEnd.x + cos(angle) * tickleStrength;
+                    heartLine.end.y = heartLine.originalEnd.y + sin(angle) * tickleStrength;
+                } else {
+                    // Gradually return to original position
+                    heartLine.end.x = lerp(heartLine.end.x, heartLine.originalEnd.x, 0.5);
+                    heartLine.end.y = lerp(heartLine.end.y, heartLine.originalEnd.y, 0.5);
+                }
+                
+                // Apply heartbeat effect
+                let beatEffect = 1 + heartbeat;
+                let centerX = width / 2;
+                let centerY = height / 2;
+                
+                heartLine.start.x = centerX + (heartLine.start.x - centerX) * beatEffect;
+                heartLine.start.y = centerY + (heartLine.start.y - centerY) * beatEffect;
+                heartLine.end.x = centerX + (heartLine.end.x - centerX) * beatEffect;
+                heartLine.end.y = centerY + (heartLine.end.y - centerY) * beatEffect;
+                
+                // Draw the line
+                line(heartLine.start.x, heartLine.start.y, heartLine.end.x, heartLine.end.y);
+            }
+        }
     </script>
 </body>
 </html>
